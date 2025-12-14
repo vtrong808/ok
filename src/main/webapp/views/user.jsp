@@ -17,8 +17,7 @@
 
     <div>
         <span class="text-white me-3">
-            Hello, ${sessionScope.currentUser.fullname}
-            <%-- Hiển thị ảnh Avatar Google nếu có --%>
+            ${sessionScope.currentUser.fullname}
             <c:if test="${not empty sessionScope.currentUser.email}">
                 (Google User)
             </c:if>
