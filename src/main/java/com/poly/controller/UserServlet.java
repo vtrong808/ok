@@ -17,103 +17,108 @@ public class UserServlet extends HttpServlet {
 
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String path = req.getServletPath();
+        String path = req.getServletPath(); // Lấy đường dẫn người dùng đang gọi (ví dụ: /user/index)
 
-        // --- 1. Xử lý Đăng xuất ---
+        // XỬ LÝ ĐĂNG XUẤT
         if (path.contains("logout")) {
-            req.getSession().invalidate(); // Hủy toàn bộ session
-            resp.sendRedirect(req.getContextPath() + "/login.jsp");
-            return; // Dừng, không chạy code bên dưới
+            req.getSession().invalidate(); // Hủy session (xóa sạch thông tin đăng nhập)
+            resp.sendRedirect(req.getContextPath() + "/login.jsp"); // Đá về trang login
+            return; // Dừng luôn, không chạy code bên dưới nữa
         }
 
-        // --- 2. Xử lý Đăng nhập thường (POST từ login.jsp) ---
+        // XỬ LÝ ĐĂNG NHẬP (USER THƯỜNG)
         if (path.contains("login")) {
+            // Nếu là method POST (Người dùng bấm nút Login)
             if (req.getMethod().equalsIgnoreCase("POST")) {
                 String id = req.getParameter("id");
                 String pass = req.getParameter("password");
 
+                // Mở kết nối Hibernate để kiểm tra DB
                 try (Session session = HibernateUtils.getSessionFactory().openSession()) {
                     User user = session.get(User.class, id); // Tìm user theo ID
 
+                    // Kiểm tra: Có user không? Mật khẩu đúng không?
                     if (user != null && user.getPassword().equals(pass)) {
-                        // Thành công: Lưu user vào session
+                        // OK -> Lưu user vào Session (để các trang khác biết là đã login)
                         req.getSession().setAttribute("currentUser", user);
                         // Chuyển hướng vào trang quản lý
                         resp.sendRedirect(req.getContextPath() + "/user/index");
                     } else {
-                        // Thất bại: Báo lỗi và quay lại trang login
-                        req.setAttribute("message", "Sai thông tin đăng nhập!");
+                        // Fail -> Báo lỗi và quay lại trang login
+                        req.setAttribute("message", "Sai tài khoản hoặc mật khẩu!");
                         req.getRequestDispatcher("/login.jsp").forward(req, resp);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
-                    req.setAttribute("message", "Lỗi xử lý đăng nhập!");
+                    req.setAttribute("message", "Lỗi kết nối CSDL!");
                     req.getRequestDispatcher("/login.jsp").forward(req, resp);
                 }
             } else {
-                // Nếu người dùng gõ /login trên URL (GET) -> Đẩy về trang jsp
+                // Nếu là method GET (gõ url /login) -> Chỉ hiện trang login thôi
                 resp.sendRedirect(req.getContextPath() + "/login.jsp");
             }
-            return; // Quan trọng: Dừng xử lý để không chạy xuống phần CRUD
+            return; // Dừng xử lý
         }
 
-        // --- 3. Xử lý CRUD & Quản lý User (Chỉ chạy khi đã login hoặc tắt Filter) ---
-        // Mở session Hibernate
+        // XỬ LÝ CRUD & QUẢN LÝ USER
         try (Session session = HibernateUtils.getSessionFactory().openSession()) {
-            Transaction tx = session.beginTransaction();
+            Transaction tx = session.beginTransaction(); // Bắt đầu giao dịch
             try {
+                // Điều hướng dựa trên đường dẫn (Routing)
                 if (path.contains("create")) {
-                    doCreate(req, session);
+                    doCreate(req, session); // Gọi hàm thêm mới
                 } else if (path.contains("update")) {
-                    doUpdate(req, session);
+                    doUpdate(req, session); // Gọi hàm cập nhật
                 } else if (path.contains("delete")) {
-                    doDelete(req, session);
+                    doDelete(req, session); // Gọi hàm xóa
                 } else if (path.contains("edit")) {
-                    doEdit(req, session);
+                    doEdit(req, session);   // Gọi hàm lấy thông tin lên form
                 } else if (path.contains("reset")) {
-                    req.setAttribute("user", new User());
+                    req.setAttribute("user", new User()); // Xóa trắng form
                 } else if (path.contains("search")) {
-                    doSearch(req, session);
+                    doSearch(req, session); // Gọi hàm tìm kiếm
                 }
 
-                // Nếu không phải là search thì load lại toàn bộ danh sách
+                // Nếu không phải đang tìm kiếm thì load lại toàn bộ danh sách để hiển thị
                 if (!path.contains("search")) {
                     List<User> list = session.createQuery("FROM User", User.class).list();
                     req.setAttribute("items", list);
                 }
 
-                tx.commit();
+                tx.commit(); // Chốt giao dịch (Lưu thay đổi vào DB)
             } catch (Exception e) {
-                tx.rollback();
+                tx.rollback(); // Có lỗi thì hoàn tác (Undo)
                 req.setAttribute("message", "Lỗi hệ thống: " + e.getMessage());
                 e.printStackTrace();
             }
         }
 
-        // Forward dữ liệu ra trang hiển thị
+        // Cuối cùng: Chuyển dữ liệu (User, List) sang trang JSP để hiển thị
         req.getRequestDispatcher("/views/user.jsp").forward(req, resp);
     }
 
-    // --- Các hàm phụ trợ CRUD ---
+    // --- CÁC HÀM PHỤ TRỢ ---
 
+    // Hàm thêm mới User
     private void doCreate(HttpServletRequest req, Session session) {
         User user = new User();
         try {
-            readForm(user, req);
-            session.persist(user);
+            readForm(user, req); // Đọc dữ liệu từ form html
+            session.persist(user); // Lưu vào DB
             req.setAttribute("message", "Thêm mới thành công!");
         } catch (Exception e) {
-            req.setAttribute("message", "Thêm mới thất bại (Trùng ID?)");
+            req.setAttribute("message", "Thêm thất bại (Trùng ID chăng?)");
         }
     }
 
+    // Hàm cập nhật User
     private void doUpdate(HttpServletRequest req, Session session) {
         try {
             String id = req.getParameter("id");
-            User user = session.get(User.class, id);
+            User user = session.get(User.class, id); // Tìm user cũ
             if (user != null) {
-                readForm(user, req);
-                session.merge(user);
+                readForm(user, req); // Cập nhật thông tin mới
+                session.merge(user); // Update vào DB
                 req.setAttribute("message", "Cập nhật thành công!");
             }
         } catch (Exception e) {
@@ -121,35 +126,41 @@ public class UserServlet extends HttpServlet {
         }
     }
 
+    // Hàm xóa User
     private void doDelete(HttpServletRequest req, Session session) {
         String id = req.getParameter("id");
         User user = session.get(User.class, id);
         if (user != null) {
-            session.remove(user);
+            session.remove(user); // Xóa khỏi DB
             req.setAttribute("message", "Xóa thành công!");
         }
     }
 
+    // Hàm đẩy thông tin User lên form để sửa
     private void doEdit(HttpServletRequest req, Session session) {
         String id = req.getParameter("id");
         User user = session.get(User.class, id);
         req.setAttribute("user", user);
     }
 
+    // Hàm tìm kiếm theo tên
     private void doSearch(HttpServletRequest req, Session session) {
         String keyword = req.getParameter("keyword");
+        // Câu lệnh HQL: Tìm user có fullname chứa từ khóa
         String hql = "FROM User WHERE fullname LIKE :kw";
         Query<User> query = session.createQuery(hql, User.class);
-        query.setParameter("kw", "%" + keyword + "%");
+        query.setParameter("kw", "%" + keyword + "%"); // % là ký tự đại diện
         List<User> list = query.list();
-        req.setAttribute("items", list);
+        req.setAttribute("items", list); // Gửi kết quả tìm được về JSP
     }
 
+    // Hàm đọc dữ liệu từ Form HTML đổ vào đối tượng User
     private void readForm(User user, HttpServletRequest req) {
         user.setId(req.getParameter("id"));
         user.setPassword(req.getParameter("password"));
         user.setFullname(req.getParameter("fullname"));
         user.setEmail(req.getParameter("email"));
+        // Checkbox/Radio trả về "true" nếu được chọn
         user.setAdmin(req.getParameter("role") != null && req.getParameter("role").equals("true"));
     }
 }
