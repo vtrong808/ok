@@ -43,7 +43,7 @@ public class GoogleLoginServlet extends HttpServlet {
                 // 3. Nếu chưa có -> Tự động Đăng ký (Tạo mới user)
                 if (user == null) {
                     user = new User();
-                    user.setId(googleUser.getId().substring(0, 20)); // Cắt ngắn ID nếu quá dài
+                    user.setId(googleUser.getId());
                     user.setEmail(googleUser.getEmail());
                     user.setFullname(googleUser.getName());
                     user.setPassword("google_pass"); // Mật khẩu ngẫu nhiên hoặc placeholder
