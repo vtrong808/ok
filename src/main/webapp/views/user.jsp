@@ -12,6 +12,20 @@
     </style>
 </head>
 <body>
+<nav class="navbar navbar-dark bg-dark mb-4 px-4 justify-content-between">
+    <span class="navbar-brand mb-0 h1">Poly App</span>
+
+    <div>
+        <span class="text-white me-3">
+            Hello, ${sessionScope.currentUser.fullname}
+            <%-- Hiển thị ảnh Avatar Google nếu có --%>
+            <c:if test="${not empty sessionScope.currentUser.email}">
+                (Google User)
+            </c:if>
+        </span>
+        <a href="${pageContext.request.contextPath}/logout" class="btn btn-outline-danger btn-sm">Logout</a>
+    </div>
+</nav>
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-8">
@@ -90,20 +104,6 @@
                 </c:forEach>
                 </tbody>
             </table>
-
-            <c:url var="googleLoginUrl" value="https://accounts.google.com/o/oauth2/auth">
-                <c:param name="client_id" value="266380978432-r2o4brm11bgervb21jlhn9s3rbu7k1qf.apps.googleusercontent.com"/>
-                <c:param name="redirect_uri" value="http://localhost:8080/login-google"/>
-                <c:param name="response_type" value="code"/>
-                <c:param name="scope" value="email profile"/>
-                <c:param name="approval_prompt" value="force"/>
-            </c:url>
-
-            <div class="text-center mt-3">
-                <a href="${googleLoginUrl}" class="btn btn-danger">
-                    <i class="bi bi-google"></i> Login with Google
-                </a>
-            </div>
         </div>
     </div>
 </div>
