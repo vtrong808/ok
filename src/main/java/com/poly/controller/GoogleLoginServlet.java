@@ -30,13 +30,13 @@ public class GoogleLoginServlet extends HttpServlet {
         }
 
         try {
-            // --- Bước 1: Dùng "code" đổi lấy "AccessToken" ---
+            // Bước 1: Dùng "code" đổi lấy "AccessToken"
             String accessToken = GoogleUtils.getToken(code);
 
-            // --- Bước 2: Dùng "AccessToken" để lấy thông tin User (email, tên, avatar...) ---
+            // Bước 2: Dùng "AccessToken" để lấy thông tin User (email, tên, avatar...)
             UserGoogleDto googleUser = GoogleUtils.getUserInfo(accessToken);
 
-            // --- Bước 3: Kiểm tra xem User này đã có trong Database chưa? ---
+            // Bước 3: Kiểm tra xem User này đã có trong Database chưa?
             try (Session session = HibernateUtils.getSessionFactory().openSession()) {
                 Transaction tx = session.beginTransaction();
 
@@ -45,7 +45,7 @@ public class GoogleLoginServlet extends HttpServlet {
                         .setParameter("email", googleUser.getEmail())
                         .uniqueResult();
 
-                // --- Bước 4: Nếu chưa có -> Tự động Đăng ký (Lưu mới vào DB) ---
+                // Bước 4: Nếu chưa có -> Tự động Đăng ký (Lưu mới vào DB)
                 if (user == null) {
                     user = new User();
                     user.setId(googleUser.getId()); // Lấy ID của Google làm ID đăng nhập
@@ -59,11 +59,11 @@ public class GoogleLoginServlet extends HttpServlet {
 
                 tx.commit();
 
-                // --- Bước 5: Lưu thông tin vào Session (Đánh dấu đã đăng nhập thành công) ---
+                // Bước 5: Lưu thông tin vào Session (Đánh dấu đã đăng nhập thành công)
                 HttpSession httpSession = req.getSession();
                 httpSession.setAttribute("currentUser", user);
 
-                // --- Bước 6: Chuyển hướng về trang chủ quản lý ---
+                // Bước 6: Chuyển hướng về trang chủ quản lý
                 resp.sendRedirect(req.getContextPath() + "/user/index");
             }
 

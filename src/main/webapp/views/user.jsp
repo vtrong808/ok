@@ -51,14 +51,14 @@
                     </div>
 
                     <div class="mb-3">
-                        <label>Role:</label>
+                        <label class="text-white">Role:</label>
                         <div class="form-check form-check-inline">
                             <input class="form-check-input" type="radio" name="role" value="true" ${user.admin ? 'checked' : ''}>
-                            <label class="form-check-label">Admin</label>
+                            <label class="form-check-label text-white">Admin</label>
                         </div>
                         <div class="form-check form-check-inline">
                             <input class="form-check-input" type="radio" name="role" value="false" ${!user.admin ? 'checked' : ''}>
-                            <label class="form-check-label">User</label>
+                            <label class="form-check-label text-white">User</label>
                         </div>
                     </div>
 
@@ -70,7 +70,7 @@
 
                 <form action="${pageContext.request.contextPath}/user/search" method="post" class="mt-3">
                     <div class="input-group">
-                        <input type="text" name="keyword" class="form-control" placeholder="Search by name...">
+                        <input type="text" name="keyword" class="form-control" placeholder="Search by ID or name...">
                         <button class="btn btn-outline-light">Search</button>
                     </div>
                 </form>

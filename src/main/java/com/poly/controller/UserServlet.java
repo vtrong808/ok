@@ -17,6 +17,9 @@ public class UserServlet extends HttpServlet {
 
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        req.setCharacterEncoding("UTF-8");
+        resp.setCharacterEncoding("UTF-8");
+
         String path = req.getServletPath(); // Lấy đường dẫn người dùng đang gọi (ví dụ: /user/index)
 
         // XỬ LÝ ĐĂNG XUẤT
@@ -45,7 +48,7 @@ public class UserServlet extends HttpServlet {
                         resp.sendRedirect(req.getContextPath() + "/user/index");
                     } else {
                         // Fail -> Báo lỗi và quay lại trang login
-                        req.setAttribute("message", "Sai tài khoản hoặc mật khẩu!");
+                        req.setAttribute("message", "Sai thông tin đăng nhập rồi kìa!!");
                         req.getRequestDispatcher("/login.jsp").forward(req, resp);
                     }
                 } catch (Exception e) {
@@ -143,15 +146,23 @@ public class UserServlet extends HttpServlet {
         req.setAttribute("user", user);
     }
 
-    // Hàm tìm kiếm theo tên
+    // Hàm tìm kiếm theo tên và ID
     private void doSearch(HttpServletRequest req, Session session) {
         String keyword = req.getParameter("keyword");
-        // Câu lệnh HQL: Tìm user có fullname chứa từ khóa
-        String hql = "FROM User WHERE fullname LIKE :kw";
+
+        // Xử lý nếu keyword null (tránh lỗi)
+        if (keyword == null) keyword = "";
+        keyword = keyword.trim(); // Trim khoảng trắng thừa 2 đầu
+        // HQL: Tìm ID hoặc Fullname chứa từ khóa (dùng wildcard %)
+        String hql = "FROM User WHERE id LIKE :kw OR fullname LIKE :kw";
         Query<User> query = session.createQuery(hql, User.class);
-        query.setParameter("kw", "%" + keyword + "%"); // % là ký tự đại diện
+        // Gán tham số: thêm dấu % bao quanh để tìm 'gần đúng' (contains)
+        query.setParameter("kw", "%" + keyword + "%");
         List<User> list = query.list();
-        req.setAttribute("items", list); // Gửi kết quả tìm được về JSP
+
+        // Gửi kết quả về JSP
+        req.setAttribute("items", list);
+        req.setAttribute("searchKeyword", keyword); // Gửi lại từ khóa để hiển thị lại trên ô input (UX tốt hơn)
     }
 
     // Hàm đọc dữ liệu từ Form HTML đổ vào đối tượng User

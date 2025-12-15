@@ -12,33 +12,36 @@
 </head>
 <body>
 <div class="card p-4 shadow-lg">
-    <h3 class="text-center mb-4">Welcome Back</h3>
+    <h3 class="text-center mb-4 text-white">Welcome Back</h3>
 
-    <%-- Hiển thị thông báo lỗi nếu có --%>
-    <c:if test="${not empty param.message}">
-        <div class="alert alert-danger">${param.message}</div>
+    <c:set var="alertMsg" value="${not empty message ? message : param.message}" />
+
+    <c:if test="${not empty alertMsg}">
+        <div class="alert alert-danger text-center" role="alert">
+                ${alertMsg}
+        </div>
     </c:if>
 
     <c:if test="${not empty param.error}">
-        <div class="alert alert-warning">Vui lòng đăng nhập trước!</div>
+        <div class="alert alert-warning text-center">Vui lòng đăng nhập trước!</div>
     </c:if>
 
-    <%-- Form đăng nhập thường (Login bằng ID trong DB) --%>
+    <%-- Form đăng nhập thường --%>
     <form action="${pageContext.request.contextPath}/login" method="post">
         <div class="mb-3">
-            <label>Username (ID)</label>
-            <input type="text" name="id" class="form-control" placeholder="Enter your ID">
+            <label class="text-white mb-1">Username (ID)</label>
+            <input type="text" name="id" class="form-control" placeholder="Enter your ID" required>
         </div>
         <div class="mb-3">
-            <label>Password</label>
-            <input type="password" name="password" class="form-control" placeholder="Enter password">
+            <label class="text-white mb-1">Password</label>
+            <input type="password" name="password" class="form-control" placeholder="Enter password" required>
         </div>
         <button class="btn btn-primary w-100">Sign In</button>
     </form>
 
     <hr class="border-secondary my-4">
 
-    <%-- Nút Login Google (Copy logic URL từ file user.jsp cũ sang đây) --%>
+    <%-- Nút Login Google --%>
     <c:url var="googleLoginUrl" value="https://accounts.google.com/o/oauth2/auth">
         <c:param name="client_id" value="266380978432-r2o4brm11bgervb21jlhn9s3rbu7k1qf.apps.googleusercontent.com"/>
         <c:param name="redirect_uri" value="http://localhost:8080/login-google"/>
